@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+# Sounds made while trying things out; keep them in the app that uses them, not here
+out/
+sounds/

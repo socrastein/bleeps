@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bleeps"
+version = "0.1.0"
+description = "Makes and finishes small alert sounds (beeps, bells, whistles, buzzers) with only the Python standard library."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+bleeps = "bleeps.cli:main"
+
+[tool.setuptools]
+packages = ["bleeps"]
