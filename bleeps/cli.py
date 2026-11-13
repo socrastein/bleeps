@@ -5,6 +5,7 @@ The command line:
     bleeps make [NAME ...] --out DIR make sounds (all of them if none are named) as DIR/NAME.wav
     bleeps soften FILE ...           fade the end of recorded sounds so they no longer click
     bleeps check FILE ...            check that sound files are well made
+    bleeps compress FILE ... --out DIR   write each WAV as DIR/NAME.mp3, for the web (needs LAME)
 
 Without installing it, run `python3 -m bleeps ...` from the folder that holds the `bleeps` folder.
 """
@@ -14,6 +15,7 @@ import sys
 from pathlib import Path
 
 from bleeps.check import DEFAULT_MAX_SECONDS, DEFAULT_MIN_SECONDS, check_file
+from bleeps.compress import compress
 from bleeps.finish import scale_to_peak, fade_out, soften, END_FADE_SECONDS
 from bleeps.recipes import RECIPES, recipe_named
 from bleeps.synth import SAMPLE_RATE
@@ -97,8 +99,21 @@ def command_check(arguments):
     return status
 
 
+def command_compress(arguments):
+    """Writes each WAV as an MP3 into the output folder, printing how much smaller it is."""
+    output = Path(arguments.out)
+    output.mkdir(parents=True, exist_ok=True)
+    for name in arguments.files:
+        source = Path(name)
+        destination = compress(source, output)
+        before = source.stat().st_size
+        after = destination.stat().st_size
+        print(f"{destination.name}: {after} bytes, {after * 100 // before}% of the WAV")
+    return EXIT_OK
+
+
 def build_parser():
-    """The argument parser for all four commands."""
+    """The argument parser for all five commands."""
     parser = argparse.ArgumentParser(prog="bleeps", description="Makes and finishes small alert sounds.")
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -121,6 +136,11 @@ def build_parser():
     checking.add_argument("--min-seconds", type=float, default=DEFAULT_MIN_SECONDS, help="the shortest a sound may be")
     checking.add_argument("--max-seconds", type=float, default=DEFAULT_MAX_SECONDS, help="the longest a sound may be")
     checking.set_defaults(run=command_check)
+
+    compressing = commands.add_parser("compress", help="write WAV files as MP3s for the web (needs LAME installed)")
+    compressing.add_argument("files", nargs="+", help="the WAV files to compress (check them first)")
+    compressing.add_argument("--out", required=True, help="the folder to write NAME.mp3 files into (made if it is missing)")
+    compressing.set_defaults(run=command_compress)
     return parser
 
 

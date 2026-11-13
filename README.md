@@ -1,9 +1,9 @@
 # bleeps
 
 Makes and finishes the small alert sounds an app needs: beeps, bells, whistles, buzzers. Python's standard library only, so there is
-nothing to install and no recording to license.
+nothing to install (except LAME, for `compress` alone) and no recording to license.
 
-An app should hold only its finished `.wav` files. This tool lives apart from every app, makes the sounds, and checks them; you copy
+An app should hold only its finished sound files (`.wav`, or `.mp3` from `compress`). This tool lives apart from every app, makes the sounds, and checks them; you copy
 the results into whichever app wants them.
 
 ## Use
@@ -16,6 +16,7 @@ python3 -m bleeps make --out ~/somewhere      # make all of them as ~/somewhere/
 python3 -m bleeps make chime gong --out out   # make only these
 python3 -m bleeps soften recording.wav        # fade the end of a recording so it does not click (in place)
 python3 -m bleeps check app/assets/sounds/*.wav
+python3 -m bleeps compress out/*.wav --out web  # write each as web/NAME.mp3 for a web app (needs LAME)
 ```
 
 `pip install .` also gives a `bleeps` command, which you can then run from anywhere.
@@ -23,6 +24,10 @@ python3 -m bleeps check app/assets/sounds/*.wav
 `check` prints one line per file (length, peak, RMS) and a line for each problem, and exits 1 if any file has one, so it can run in a
 script. It looks for: a format other than mono 16-bit 22050 Hz, clipping, silence, a length under 0.05 s or over 4 s, and an abrupt
 end (a click).
+
+`compress` turns finished WAVs into MP3s about a fifth of the size (mono, 64 kbit/s), which a web app that keeps every alert for
+offline use should ship instead. It is the one command that needs something installed: the LAME encoder
+(https://lame.sourceforge.io/; `pacman -S lame`, `apt install lame`). Check the WAVs first; the MP3 is made from them as they are.
 
 ## The sounds
 
@@ -60,6 +65,7 @@ python3 -m unittest discover -s tests -t .
 | `bleeps/finish.py` | loudness scaling, the end fade, and the "ends softly" test |
 | `bleeps/wavfile.py` | reading and writing mono 16-bit WAV files |
 | `bleeps/check.py` | the checks behind `bleeps check` |
+| `bleeps/compress.py` | writing finished WAVs as MP3s, through LAME |
 | `bleeps/cli.py` | the command line |
 
 ## Licence
