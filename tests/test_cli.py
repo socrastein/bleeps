@@ -61,6 +61,13 @@ class CliTests(unittest.TestCase):
         self.assertIn("PROBLEM", out)
         self.assertIn("click", out)
 
+    def test_a_file_that_is_not_a_wav_is_an_error_not_a_crash(self):
+        path = self.root / "notes.wav"
+        path.write_text("this is not a sound")
+        code, _, err = run("check", str(path))
+        self.assertEqual(code, EXIT_FAILED)
+        self.assertIn("bleeps:", err)
+
     def test_soften_changes_the_file_in_place_then_leaves_it_alone(self):
         path = self.abrupt_sound()
         code, out, _ = run("soften", str(path))

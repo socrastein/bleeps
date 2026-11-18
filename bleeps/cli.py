@@ -12,6 +12,7 @@ Without installing it, run `python3 -m bleeps ...` from the folder that holds th
 
 import argparse
 import sys
+import wave
 from pathlib import Path
 
 from bleeps.check import DEFAULT_MAX_SECONDS, DEFAULT_MIN_SECONDS, check_file
@@ -25,6 +26,9 @@ from bleeps.wavfile import read_wav, write_wav
 EXIT_OK = 0
 EXIT_PROBLEMS = 1
 EXIT_FAILED = 2
+
+# Converts the fade's length in seconds into the milliseconds printed for it
+MILLISECONDS_PER_SECOND = 1000
 
 
 def command_list(arguments):
@@ -65,23 +69,34 @@ def command_soften(arguments):
 
     status = EXIT_OK
     for name in arguments.files:
-        source = Path(name)
-        data = read_wav(source)
-        if not data.is_mono_16_bit:
-            print(f"{source.name}: not mono 16-bit, which is all this knows how to fade", file=sys.stderr)
+        # One bad file does not stop the others; the status records that something failed
+        if soften_file(Path(name), output) == EXIT_FAILED:
             status = EXIT_FAILED
-            continue
-
-        softened, fade_seconds = soften(data.samples, data.sample_rate)
-        destination = source if output is None else output / source.name
-        if fade_seconds == 0.0:
-            print(f"{source.name}: already ends softly, left as it is")
-            if destination != source:
-                write_wav(destination, data.samples, data.sample_rate)
-            continue
-        write_wav(destination, softened, data.sample_rate)
-        print(f"{source.name}: end faded over {fade_seconds * 1000:.0f} ms")
     return status
+
+
+def soften_file(source, output):
+    """
+    Fades the end of one WAV, over itself when OUTPUT is None, otherwise into the OUTPUT folder. Returns EXIT_FAILED for a file
+    that is not mono 16-bit (the only format the fade knows), otherwise EXIT_OK.
+    """
+    data = read_wav(source)
+    if not data.is_mono_16_bit:
+        print(f"{source.name}: not mono 16-bit, which is all this knows how to fade", file=sys.stderr)
+        return EXIT_FAILED
+
+    softened, fade_seconds = soften(data.samples, data.sample_rate)
+    destination = source if output is None else output / source.name
+    # A fade length of exactly zero means soften found nothing to do, so the samples are written unchanged
+    if fade_seconds == 0.0:
+        print(f"{source.name}: already ends softly, left as it is")
+        if destination != source:
+            write_wav(destination, data.samples, data.sample_rate)
+        return EXIT_OK
+
+    write_wav(destination, softened, data.sample_rate)
+    print(f"{source.name}: end faded over {fade_seconds * MILLISECONDS_PER_SECOND:.0f} ms")
+    return EXIT_OK
 
 
 def command_check(arguments):
@@ -150,7 +165,7 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     try:
         return arguments.run(arguments)
-    except (OSError, EOFError) as error:
-        # A missing file, a folder that cannot be written, a file that is not a WAV at all
+    except (OSError, EOFError, wave.Error) as error:
+        # A missing file, a folder that cannot be written, a file that is not a WAV (wave.Error, from the wave module)
         print(f"bleeps: {error}", file=sys.stderr)
         return EXIT_FAILED
