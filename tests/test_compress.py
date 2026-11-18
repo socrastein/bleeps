@@ -1,10 +1,11 @@
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
 from bleeps import compress as compress_module
-from bleeps.compress import BITRATE_KBPS, compress, encode_command, encoder_is_installed
+from bleeps.compress import BITRATE_KBPS, ENCODE_TIMEOUT_SECONDS, compress, encode_command, encoder_is_installed
 from bleeps.synth import SAMPLE_RATE
 from bleeps.wavfile import write_wav
 from tests.test_cli import run
@@ -30,6 +31,15 @@ class CompressTests(unittest.TestCase):
         with mock.patch.object(compress_module.shutil, "which", return_value=None):
             with self.assertRaisesRegex(OSError, "lame is not installed"):
                 compress(self.source, self.root)
+
+    def test_says_so_when_lame_runs_past_the_time_limit(self):
+        # A stuck LAME is stopped by subprocess and reported as an OSError, which the command line prints
+        timed_out = subprocess.TimeoutExpired(cmd="lame", timeout=ENCODE_TIMEOUT_SECONDS)
+        with mock.patch.object(compress_module.shutil, "which", return_value="/usr/bin/lame"):
+            with mock.patch.object(compress_module.subprocess, "run", side_effect=timed_out) as run_lame:
+                with self.assertRaisesRegex(OSError, "did not finish encoding beep.wav"):
+                    compress(self.source, self.root)
+        self.assertEqual(run_lame.call_args.kwargs["timeout"], ENCODE_TIMEOUT_SECONDS)
 
     @unittest.skipUnless(encoder_is_installed(), "LAME is not installed here")
     def test_writes_a_smaller_mp3_named_after_the_wav(self):

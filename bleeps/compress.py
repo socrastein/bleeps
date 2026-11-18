@@ -18,6 +18,10 @@ ENCODER = "lame"
 # Constant, not variable, so every file's size is predictable from its length.
 BITRATE_KBPS = 64
 
+# How long LAME may take on one file. A sound of a few seconds encodes far faster than this, so reaching it means LAME is stuck,
+# and it is reported as a failure rather than waited on forever.
+ENCODE_TIMEOUT_SECONDS = 60
+
 
 def encoder_is_installed():
     """Whether LAME can be found on the PATH."""
@@ -36,13 +40,26 @@ def encode_command(source, destination):
 
 def compress(source, output_folder):
     """
-    Writes OUTPUT_FOLDER/NAME.mp3 from the WAV at `source` and returns its path. Raises OSError when LAME is not installed or
-    fails, with LAME's own message.
+    Writes OUTPUT_FOLDER/NAME.mp3 from the WAV at `source` and returns its path. Raises OSError when LAME is not installed, fails,
+    or takes longer than ENCODE_TIMEOUT_SECONDS, with LAME's own message where it has one.
     """
     destination = Path(output_folder) / (Path(source).stem + ".mp3")
     if not encoder_is_installed():
         raise OSError(f"{ENCODER} is not installed; `bleeps compress` needs it (https://lame.sourceforge.io/)")
-    result = subprocess.run(encode_command(source, destination), capture_output=True, text=True)
+    run_encoder(source, destination)
+    return destination
+
+
+def run_encoder(source, destination):
+    """
+    Runs LAME to write `destination` from `source`. Raises OSError with LAME's message when it exits with an error, and with a
+    timeout message when it runs past ENCODE_TIMEOUT_SECONDS (the process is then stopped by subprocess).
+    """
+    try:
+        result = subprocess.run(
+            encode_command(source, destination), capture_output=True, text=True, timeout=ENCODE_TIMEOUT_SECONDS
+        )
+    except subprocess.TimeoutExpired as error:
+        raise OSError(f"{ENCODER} did not finish encoding {Path(source).name} within {ENCODE_TIMEOUT_SECONDS} s") from error
     if result.returncode != 0:
         raise OSError(f"{ENCODER} could not encode {Path(source).name}: {result.stderr.strip()}")
-    return destination
