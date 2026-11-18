@@ -27,9 +27,6 @@ EXIT_OK = 0
 EXIT_PROBLEMS = 1
 EXIT_FAILED = 2
 
-# Converts the fade's length in seconds into the milliseconds printed for it
-MILLISECONDS_PER_SECOND = 1000
-
 
 def command_list(arguments):
     """Prints each sound's name and what it models."""
@@ -95,7 +92,8 @@ def soften_file(source, output):
         return EXIT_OK
 
     write_wav(destination, softened, data.sample_rate)
-    print(f"{source.name}: end faded over {fade_seconds * MILLISECONDS_PER_SECOND:.0f} ms")
+    # the fade is held in seconds, and printed in milliseconds
+    print(f"{source.name}: end faded over {fade_seconds * 1000:.0f} ms")
     return EXIT_OK
 
 
