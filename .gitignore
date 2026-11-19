@@ -6,3 +6,4 @@ dist/
 # Sounds made while trying things out; keep them in the app that uses them, not here
 out/
 sounds/
+node_modules/

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# git runs this before every push (once per clone: `git config core.hooksPath .githooks`). This repo has no GitHub
+# Actions, so the formatting check runs here instead: a push is refused while any file is not formatted.
+# The check reads the working folder, not the commits being pushed. `git push --no-verify` skips this hook.
+set -euo pipefail
+
+npm run --silent format:check < /dev/null
