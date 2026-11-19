@@ -58,15 +58,15 @@ python3 -m unittest discover -s tests -t .
 
 ## Layout
 
-| File | What it holds |
-|---|---|
-| `bleeps/synth.py` | the building blocks: tones, struck bells, mixing, delaying |
-| `bleeps/recipes.py` | the named sounds and the peak each is saved at |
-| `bleeps/finish.py` | loudness scaling, the end fade, and the "ends softly" test |
-| `bleeps/wavfile.py` | reading and writing mono 16-bit WAV files |
-| `bleeps/check.py` | the checks behind `bleeps check` |
-| `bleeps/compress.py` | writing finished WAVs as MP3s, through LAME |
-| `bleeps/cli.py` | the command line |
+| File                 | What it holds                                              |
+| -------------------- | ---------------------------------------------------------- |
+| `bleeps/synth.py`    | the building blocks: tones, struck bells, mixing, delaying |
+| `bleeps/recipes.py`  | the named sounds and the peak each is saved at             |
+| `bleeps/finish.py`   | loudness scaling, the end fade, and the "ends softly" test |
+| `bleeps/wavfile.py`  | reading and writing mono 16-bit WAV files                  |
+| `bleeps/check.py`    | the checks behind `bleeps check`                           |
+| `bleeps/compress.py` | writing finished WAVs as MP3s, through LAME                |
+| `bleeps/cli.py`      | the command line                                           |
 
 ## Licence
 
