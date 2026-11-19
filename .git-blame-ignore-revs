@@ -1,0 +1,2 @@
+# The Prettier reformat of every file. git blame skips it with `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+8c8615a00c2e7580e26c5bfbfcf46a43aa061298
